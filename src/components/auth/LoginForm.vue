@@ -82,11 +82,16 @@ import {reactive} from "vue";
 /*
 Auth services
  */
-import useAuthService from "../../services/auth/useAuthService";
+import useAuthService from "../../services/auth/useAuthService.js";
+/*
+
+ */
+import {hasRole} from "../../utils/RolesAndPermissions.js";
 /*
 Store
  */
 import {useAuthStore} from "../../stores/AuthStore";
+import {useUserStore} from "../../stores/UserStore.js";
 import {storeToRefs} from 'pinia'
 /*
 Validation
@@ -141,8 +146,16 @@ const onSubmit = handleSubmit(async values => {
      */
     try {
         await login(values)
+        console.log(authStore.user.id)
+        //let response=await getUserRoles(authStore.user.id)
+        //console.log(response)
+        //userStore.userRoles=response
         if (authStore.isAuthenticated && authStore.isVerified) {
-            router.push({name: "dashboard"})
+            if(hasRole(['super admin','admin'])){
+                router.push({name: "admin-dashboard"})
+            }else{
+                router.push({name:"user-dashboard"})
+            }
         } else if (!authStore.isVerified) {
             router.push({name: 'verify-email'})
         }

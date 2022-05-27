@@ -41,6 +41,7 @@ import BaseErrorMessage from "./BaseInputErrorMessage.vue";
 
 export default {
     name: "BaseInput",
+    inheritAttrs: false,
     components: {
         BaseErrorMessage,
         ExclamationCircleIcon,

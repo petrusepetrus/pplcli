@@ -4,17 +4,18 @@
             <img class="mx-auto h-12 w-auto" src="principle group 330 130 transparent.png"
                  alt="Workflow"/>
             <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Verify your account</h2>
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Please verify your email in order to gain full access to your account functionality.
-                You will be sent a Verification Email with a link to verify your account.
-            </p>
+            <div class="mt-2 text-center text-sm text-gray-600">
+                <p>Please verify your email to gain full access to your account.</p>
+                <p>A Verification Email should be in your inbox.</p>
+                <p>If you cannot find the email please request another one by clicking on the button below.</p>
+            </div>
         </div>
         <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
             <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
                 <form novalidate v-on:submit.prevent="onSubmit" class="space-y-6">
                     <div>
                         <BaseButton
-                              title="Verify Email"
+                              title="Request A New Verification Email"
                               :submitting="isSubmitting"
                               :disabled="isSubmitting"
                         />

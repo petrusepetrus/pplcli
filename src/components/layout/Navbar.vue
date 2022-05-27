@@ -82,15 +82,22 @@ import { BellIcon, MenuIcon, XIcon } from '@heroicons/vue/outline'
 import {useAuthStore} from "../../stores/AuthStore";
 import {useRouter} from "vue-router";
 import {storeToRefs} from 'pinia'
+import useAuthService from "../../services/auth/useAuthService";
 
 const router=useRouter()
-//const {logout,getUser:user,getAuthenticated:authenticated,getVerified:verified}=useAuth()
+const {logout} = useAuthService()
 const authStore=useAuthStore()
+//const {logout,getUser:user,getAuthenticated:authenticated,getVerified:verified}=useAuth()
 const {user,authenticated,verified}=storeToRefs(authStore)
 
-const logUserOut=()=>{
-    authStore.logout()
-    router.push({name:'login'})
+const logUserOut= async ()=>{
+    try{
+        await logout()
+        router.push({name:'login'})
+    }catch(e){
+        console.log(e)
+    }
+
 }
 
 </script>

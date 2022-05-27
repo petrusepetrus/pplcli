@@ -38,9 +38,10 @@
                         :disabled="isSubmitting"
                         />
                     </div>
-                    <BaseInformationMessage v-if="informationMessage">
+                    <BaseInformationMessage v-if="informationMessage.general">
                         {{ informationMessage.general}}
                     </BaseInformationMessage>
+
                     <BaseErrorMessage v-if="errors.general">
                         {{errors.general}}
                     </BaseErrorMessage>
@@ -76,7 +77,7 @@ const {sendResetEmail} = useAuthService()
 const form = reactive({
     email: '',
 })
-const informationMessage=ref({})
+const informationMessage=reactive({})
 /*
 Set up the vee-validate validation items
  */
@@ -101,8 +102,7 @@ const onSubmit = handleSubmit(async values => {
     try{
         await sendResetEmail(values)
         let tmpMessage={}
-        tmpMessage.general = 'We have emailed your password reset link.'
-        informationMessage.value=tmpMessage
+        informationMessage.general='We have emailed your password reset link.'
     }catch(e){
         console.log("processing error ", e)
         console.log(e)

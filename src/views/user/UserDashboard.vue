@@ -3,6 +3,7 @@
         <h1>User Dashboard</h1>
         <p>Welcome to the user dashboard</p>
     </div>
+    <UserList></UserList>
 
 </template>
 
@@ -12,6 +13,7 @@ const {callUserAPI} = useAuthService()
 
 import {useAuthStore} from "../../stores/AuthStore";
 import {storeToRefs} from "pinia";
+import UserList from "./UsersList.vue";
 
 const authStore = useAuthStore()
 const {user,authenticated,verified} = storeToRefs(authStore)

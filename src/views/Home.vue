@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import {useAuthStore} from "../stores/AuthStore";
+import {useAuthStore} from "../stores/AuthStore.js";
 
 const {user,authenticated,verified}=useAuthStore()
 console.dir(user)

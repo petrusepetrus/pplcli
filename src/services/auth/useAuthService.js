@@ -47,17 +47,18 @@ export default function useAuthService() {
     const login = async (payload) => {
         await authClient.get('/sanctum/csrf-cookie')
         await authClient.post('login', payload)
-        let response=await callUserAPI()
-        const authStore = useAuthStore()
-        authStore.user =response.data
-        authStore.authenticated = true
-        authStore.verified = !!response.data.email_verified_at;
-        return response
+
+        return await callUserAPI()
     }
     /*
     logout
      */
     const logout = () => {
+        const authStore = useAuthStore()
+        const {user,verified,authenticated} = storeToRefs(authStore)
+        user.value = {}
+        authenticated.value = false
+        verified.value=false
         return authClient.post('/logout')
     }
     /*
@@ -79,20 +80,32 @@ export default function useAuthService() {
     */
     const callUserAPI = async() => {
         const authStore = useAuthStore()
-        const {user,verified,authenticated} = storeToRefs(authStore)
-        console.log("in callUser")
-        console.log("got here")
-        let response= await authClient.get('/api/user')
-        user.value =response.data
-        authenticated.value = true
-        if(response.data.email_verified_at===null){
-            verified.value=false
-        }else{
-            verified.value=true
-        }
-        console.log(response)
-        return response
+        const {user,verified,authenticated,userRoles} = storeToRefs(authStore)
+        //let response= await authClient.get('/api/user')
+        let response= await authClient.get('/api/auth')
+
+        console.log(response.data.data)
+        authStore.user.id=response.data.data.id
+        authStore.user.first_name=response.data.data.first_name
+        authStore.user.last_name=response.data.data.last_name
+        authStore.user.name=response.data.data.name
+        authStore.user.email=response.data.data.email
+        authStore.user.avatar =response.data.data.avatar
+        authStore.user.email_verified_at=response.data.data.email_verified_at
+        authStore.authenticated = true
+        authStore.verified = !!response.data.data.email_verified_at;
+        authStore.userRoles=response.data.data.roles
+        authStore.userPermissions=response.data.data.permissions
+        //response= await apiClient.get('/user-roles/' + authStore.user.id + '/')
+        //authStore.userRoles=response.data
+        return authStore.user
     }
+
+    const getUserRoles = async(userID)=>{
+        let response=await apiClient.get('/user-roles/' + userID + '/')
+        return response.data
+    }
+
     const sendVerificationEmail = async (userId) => {
         console.log("send verification email")
         await authClient.get('/sanctum/csrf-cookie')
@@ -103,6 +116,12 @@ export default function useAuthService() {
         await authClient.get('/sanctum/csrf-cookie')
         await authClient.post('/forgot-password', credentials)
     }
+    const updateUser=async(payload)=>{
+        console.log("updating user")
+        await authClient.put("/user/profile-information", payload)
+        await callUserAPI()
+        console.log("finished updating user")
+    }
     return{
         login,
         logout,
@@ -110,6 +129,7 @@ export default function useAuthService() {
         registerUser,
         callUserAPI,
         sendVerificationEmail,
-        sendResetEmail
+        sendResetEmail,
+        updateUser
     }
 }

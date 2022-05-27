@@ -94,8 +94,8 @@
                     <BaseErrorMessage v-if="errors.general">
                         {{errors.general }}
                     </BaseErrorMessage>
-                    <BaseInformationMessage v-if="myMessage.general">
-                        {{myMessage.general }}
+                    <BaseInformationMessage v-if="informationMessage.general">
+                        {{informationMessage.general }}
                     </BaseInformationMessage>
                 </form>
             </div>
@@ -139,7 +139,7 @@ const {value: email, handleChange} = useField('email')
 const {value: password} = useField('password')
 const {value: password_confirmation} = useField('password_confirmation')
 const{value:token}=useField('token')
-const myMessage={}
+const informationMessage=reactive({})
 /*
 Initialise the hidden token field to the token value set by Laravel and passed
 back in the /reset-password query parameters
@@ -152,8 +152,7 @@ const onSubmit = handleSubmit(async form => {
     try{
         const resetMessage={}
         await resetPassword(form)
-        resetMessage.general=['We have emailed your password reset link.']
-        myMessage.value=resetMessage
+        informationMessage.general='Your password has been reset.'
     }catch(e){
         console.log("processing error ", e)
         console.log(e)
@@ -165,7 +164,7 @@ const onSubmit = handleSubmit(async form => {
         password,
         password_confirmation,
         handleChange,
-        myMessage
+        informationMessage
     }
 })
 
