@@ -1,5 +1,5 @@
 import axios from "axios";
-import errorHandler from "../errors/useErrorHandler";
+import errorHandler from "../api/apiErrorHandler.js";
 
 export default function useUserService() {
     /*
@@ -22,15 +22,20 @@ export default function useUserService() {
         },
         function (error) {
             let errorMessage=errorHandler(error)
-            console.log(errorMessage)
             return Promise.reject (errorMessage)
         }
     );
+    const getUser=async(payload)=>{
+        console.log(payload)
+        let response= await apiClient.get('/user/' + payload)
+        console.log(response.data)
+        return response
+    }
     /*
     Users
      */
     const getUsers=async(payload)=>{
-        //console.log(payload)
+        console.log(payload)
         let response= await apiClient.get('/users/?page=' + payload.pageNumber,{
             params:payload
         })
@@ -43,7 +48,11 @@ export default function useUserService() {
         let response= await apiClient.post('/store-address/user/'+ userID ,payload)
         return response.data
     }
-
+    const updateUserProfile = async ( payload, userID) => {
+        console.log("updating user")
+        await apiClient.put("/user/" + userID, payload)
+        console.log("finished updating user")
+    }
     const updateUserAddress = async(payload,userID,addressID) => {
         let response= await apiClient.post('/update-address/user/'+ userID + '/address/' + addressID,payload)
         return response.data
@@ -82,7 +91,9 @@ export default function useUserService() {
     }
 
     const getUserPhones = async(payload)=>{
+        console.log(payload)
         let response=await apiClient.get('/user-phones/' + payload + '/')
+        console.log(response.data)
         return response.data
     }
 
@@ -90,9 +101,40 @@ export default function useUserService() {
         let response= await apiClient.get('/available-phone-types/user/' + userID)
         return response.data
     }
+    /*
+    userTypes
+     */
+    const getUserTypes = async() => {
+        let response= await apiClient.get('/user-types')
+        return response.data
+    }
+    const getUserUserTypes = async(userID) => {
+        let response= await apiClient.get('/user-types/user/' + userID)
+        console.log(response.data)
+        return response.data
+    }
+    const getAvailableUserTypes = async(userID) => {
+        let response= await apiClient.get('/available-user-types/user/' + userID)
+        return response.data
+    }
+    const getUserTypeStatuses = async() => {
+        let response= await apiClient.get('/user-type-status')
+        return response.data
+    }
+    const updateUserTypes=async(payload, userID)=>{
+        let response=await apiClient.post('/update-user-types/user/'+ userID,payload)
+        return response.data
+    }
 
     return{
+        getUser,
         getUsers,
+        updateUserProfile,
+        getUserTypes,
+        getUserUserTypes,
+        getAvailableUserTypes,
+        getUserTypeStatuses,
+        updateUserTypes,
         addUserAddress,
         updateUserAddress,
         deleteUserAddress,

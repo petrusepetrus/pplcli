@@ -1,8 +1,9 @@
 <template>
     <div class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <img class="mx-auto h-12 w-auto" src="principle group 330 130 transparent.png"
-                 alt="Workflow"/>
+            <img
+                  class="mx-auto h-12 w-auto" src="principle group 330 130 transparent.png"
+                  alt="Workflow"/>
             <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Reset Your Password</h2>
             <p class="mt-2 text-center text-sm text-gray-600">
                 Or, if you've remembered your password
@@ -92,10 +93,10 @@
                         />
                     </div>
                     <BaseErrorMessage v-if="errors.general">
-                        {{errors.general }}
+                        {{ errors.general }}
                     </BaseErrorMessage>
                     <BaseInformationMessage v-if="informationMessage.general">
-                        {{informationMessage.general }}
+                        {{ informationMessage.general }}
                     </BaseInformationMessage>
                 </form>
             </div>
@@ -130,7 +131,7 @@ const validationSchema = object({
     password: string().required('Please enter your password'),
     password_confirmation: string().required('Please enter your password'),
     email: string().email('Invalid email format').required('An email address is required'),
-    token:string().required('token must be present')
+    token: string().required('token must be present')
 })
 const {handleSubmit, isSubmitting, setErrors, errors} = useForm({
     validationSchema
@@ -138,22 +139,22 @@ const {handleSubmit, isSubmitting, setErrors, errors} = useForm({
 const {value: email, handleChange} = useField('email')
 const {value: password} = useField('password')
 const {value: password_confirmation} = useField('password_confirmation')
-const{value:token}=useField('token')
-const informationMessage=reactive({})
+const {value: token} = useField('token')
+const informationMessage = reactive({})
 /*
 Initialise the hidden token field to the token value set by Laravel and passed
 back in the /reset-password query parameters
  */
-token.value=route.query.token
+token.value = route.query.token
 /*
 On submit call the resetPassword endpoint
  */
 const onSubmit = handleSubmit(async form => {
-    try{
-        const resetMessage={}
+    try {
+        const resetMessage = {}
         await resetPassword(form)
-        informationMessage.general='Your password has been reset.'
-    }catch(e){
+        informationMessage.general = 'Your password has been reset.'
+    } catch (e) {
         console.log("processing error ", e)
         console.log(e)
         setErrors(e)

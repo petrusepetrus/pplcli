@@ -1,5 +1,5 @@
 <template>
-    <Disclosure as="nav" class="bg-white shadow" v-slot="{ open }">
+    <Disclosure v-slot="{ open }" as="nav" class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
             <div class="relative flex justify-between h-16">
                 <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
@@ -12,8 +12,8 @@
                 </div>
                 <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
                     <div class="flex-shrink-0 flex items-center">
-                        <img class="block lg:hidden h-8 w-auto" src="principle group 330 130 transparent.png" alt="Workflow" />
-                        <img class="hidden lg:block h-8 w-auto" src="principle group 330 130 transparent.png" alt="Workflow" />
+                        <img class="block lg:hidden h-8 w-auto" src="../../../src/assets/logo.png" alt="Workflow" />
+                        <img class="hidden lg:block h-8 w-auto" src="../../../src/assets/logo.png" alt="Workflow" />
                     </div>
                     <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
                         <!-- Current: "border-indigo-500 text-gray-900", Default: "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700" -->
@@ -47,13 +47,13 @@
                                 <div v-if="authenticated">
                                     <div class='block px-4 py-2 text-sm text-gray-700'>Hi {{user.name}}</div>
                                     <MenuItem v-if="authenticated && verified" v-slot="{ active }">
-                                        <router-link :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']" to="/user-profile">Your Profile</router-link>
+                                        <router-link :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']" :to="{name:'user-profile',params:{userID:user.id}}">Your Profile</router-link>
                                     </MenuItem>
                                     <MenuItem v-if="authenticated && !verified" v-slot="{ active }">
-                                        <router-link :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']" to="/verify-email" v-if="!verified && authenticated">Verify Email</router-link>
+                                        <router-link v-if="!verified && authenticated" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']" to="/verify-email">Verify Email</router-link>
                                     </MenuItem>
                                     <MenuItem v-slot="{ active }">
-                                        <a v-on:click.prevent="logUserOut" href="#" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">Sign out</a>
+                                        <a href="#" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']" @click.prevent="logUserOut">Sign out</a>
                                     </MenuItem>
                                 </div>
 

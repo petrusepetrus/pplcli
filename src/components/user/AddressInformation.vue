@@ -1,7 +1,7 @@
 <template>
     <div class="pt-8 sm:flex sm:items-center sm:justify-between">
         <h3 class="text-lg font-medium text-gray-900">Address Details</h3>
-        <div v-if="availableAddressTypesCount!==0" class="mt-3 sm:mt-0 sm:ml-4" v-on:click="addAddress">
+        <div v-if="availableAddressTypesCount!==0" class="mt-3 sm:mt-0 sm:ml-4" @click="addAddress">
             <BaseButton title="Add A New Address"
             />
         </div>
@@ -14,17 +14,21 @@
             Please make sure that your primary correspondence addresses is a permanent address
             where you can receive mail.
         </p>
-        <div class="m-4" v-if="addressesFound" v-for="userAddress in userStore.userAddresses">
-            <UserAddressCard
-                  :userAddress="userAddress"
-                  v-on:refresh="onRefresh"
-            >
-            </UserAddressCard>
+        <div v-for="userAddress in userStore.userAddresses">
+            <div
+                  v-if="addressesFound"
+                  class="m-4">
+                <UserAddressCard
+                      :user-address="userAddress"
+                      @refresh="onRefresh"
+                >
+                </UserAddressCard>
+            </div>
         </div>
-        <div class="m-4" v-if="addingAddress">
+        <div v-if="addingAddress" class="m-4">
             <UserAddressForm
-                  v-on:refresh="onRefresh"
-                  v-on:cancelled="onCancel"
+                  @refresh="onRefresh"
+                  @cancelled="onCancel"
             >
             </UserAddressForm>
         </div>
@@ -45,7 +49,11 @@ Imports
 -------------------------------------------------------------------------------
 Vue
  */
-import {onMounted, ref} from 'vue'
+import {ref} from 'vue'
+/*
+Router
+ */
+import {useRoute} from "vue-router";
 /*
 UI Components
  */
@@ -60,10 +68,6 @@ load the Auth store as we need to retrieve the User ID of the current user
 import {useUserStore} from "../../stores/UserStore.js";
 
 const userStore = useUserStore()
-
-import {useAuthStore} from "../../stores/AuthStore";
-
-const authStore = useAuthStore()
 /*
 API
 load the getUserAddresses service to retrieve any existing user addresses
@@ -89,7 +93,10 @@ Initialisation
 /*
 retrieve the User ID for the user in question
  */
-const userID = authStore.user.id
+const route = useRoute();
+const userID = route.params.userID
+refreshAddresses()
+findAvailableAddressTypes()
 /*
 Functions
 -------------------------------------------------------------------------------
@@ -99,13 +106,14 @@ const addAddress = () => {
     userAddress = {}
     addingAddress.value = true
 }
+
 /*
 refreshAddresses is run via the onMounted hook and also triggered by the v-on:refresh
 event that can be emitted by the AddressCard and AddressDetails components to indicate
 that a change to the user's addresses has taken place and the addresses in the userStore
 should be updated and the AddressCards refreshed with hose new details
  */
-const refreshAddresses = async () => {
+async function refreshAddresses() {
     try {
         userStore.userAddresses = await getUserAddresses(userID)
         if (userStore.userAddresses.length > 0) {
@@ -120,13 +128,11 @@ const refreshAddresses = async () => {
         console.log(e)
     }
 }
-const findAvailableAddressTypes = async () => {
+
+async function findAvailableAddressTypes() {
     try {
-        console.log(userID)
         availableAddressTypes.value = await getAvailableAddressTypes(userID)
         availableAddressTypesCount.value = (Object.keys(availableAddressTypes.value).length)
-        console.log(availableAddressTypes.value)
-        console.log(availableAddressTypesCount.value)
     } catch (e) {
         /*
         TODO need some proper error handling here
@@ -136,6 +142,7 @@ const findAvailableAddressTypes = async () => {
     }
 
 }
+
 const onCancel = () => {
     addingAddress.value = false
 }
@@ -149,10 +156,7 @@ const onRefresh = async () => {
 Lifecycle Hooks
 -------------------------------------------------------------------------------
  */
-onMounted(async () => {
-    await refreshAddresses()
-    await findAvailableAddressTypes()
-})
+
 
 </script>
 

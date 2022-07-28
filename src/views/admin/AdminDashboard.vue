@@ -57,14 +57,10 @@
 </template>
 
 <script setup>
-import {ref} from 'vue'
-import {useAuthStore} from "../../stores/AuthStore.js";
+
 import Sidebar from "../../components/layout/Sidebar.vue";
 
-const authStore = useAuthStore()
 
-let userRoles = ref({})
-userRoles = authStore.getUserRoles
 
 </script>
 

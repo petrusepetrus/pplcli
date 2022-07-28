@@ -41,7 +41,13 @@ Imports
 -------------------------------------------------------------------------------
 Vue
  */
-import {onMounted, ref} from 'vue'
+import {onBeforeMount, onMounted, ref} from 'vue'
+/*
+Router
+*/
+import {useRoute} from "vue-router";
+/*
+
 /*
 UI Components
  */
@@ -56,14 +62,11 @@ load the Auth store as we need to retrieve the User ID of the current user
 import {useUserStore} from "../../stores/UserStore.js";
 const userStore = useUserStore()
 
-import {useAuthStore} from "../../stores/AuthStore";
-const authStore = useAuthStore()
 /*
 API
 load the getUserPhones service to retrieve any existing user Phones
  */
 import useUserService from "../../services/user/useUserService.js";
-
 
 const {getUserPhones} = useUserService()
 const {getAvailablePhoneTypes} = useUserService()
@@ -83,7 +86,13 @@ Initialisation
 /*
 retrieve the User ID for the user in question
  */
-const userID = authStore.user.id
+/*
+retrieve the User ID for the user in question
+ */
+const route = useRoute();
+const userID=route.params.userID
+
+/*
 /*
 Functions
 -------------------------------------------------------------------------------
@@ -143,7 +152,7 @@ const onRefresh = async () => {
 Lifecycle Hooks
 -------------------------------------------------------------------------------
  */
-onMounted(async () => {
+onBeforeMount(async () => {
     await refreshPhones()
     await findAvailablePhoneTypes()
 })

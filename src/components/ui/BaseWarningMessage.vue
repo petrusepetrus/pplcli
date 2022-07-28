@@ -5,7 +5,7 @@
                 <ExclamationCircleIcon class="h-5 w-5 text-amber-400" aria-hidden="true" />
             </div>
             <div class="ml-3">
-                <h3 class="text-sm font-medium text-amber-800">{{ title }}</h3>
+                <h3 class="text-sm font-medium text-amber-800">{{ warningTitle }}</h3>
                 <div class="mt-2 text-sm text-amber-700">
                     <slot />
                 </div>
@@ -22,7 +22,7 @@ export default {
         ExclamationCircleIcon
     },
     props: {
-        title: {
+        warningTitle: {
             type: [String, Number],
             required: true,
             default:'Warning'

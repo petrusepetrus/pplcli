@@ -1,5 +1,5 @@
 import axios from "axios";
-import errorHandler from "../errors/useErrorHandler";
+import errorHandler from "../api/apiErrorHandler.js";
 import {useAuthStore} from "../../stores/AuthStore";
 import {storeToRefs} from 'pinia'
 
@@ -21,12 +21,11 @@ export default function useAuthService() {
             Trap the error whereby an already authenticated user is trying to log in again.
             Force the logout and make them re-enter their credentials
              */
-            if(response.status===200 && response.data.error==="Already authenticated."){
-                logout()
-                const errorResponse={}
-                let errorMessage = ['There has been a problem with your authentication. Please sign in again.']
-                errorResponse.general = errorMessage
-                return Promise.reject (errorResponse)
+            if (response.status === 200 && response.data.error === "Already authenticated.") {
+                //logout()
+                //const errorResponse = {}
+                //errorResponse.general = ['There has been a problem with your authentication. Please try again.']
+                //return Promise.reject(errorResponse)
             }
             /*
             Otherwise, all good. Return the received response from Axios.
@@ -34,13 +33,11 @@ export default function useAuthService() {
             return response;
         },
         function (error) {
-            let errorMessage=errorHandler(error)
+            let errorMessage = errorHandler(error)
             console.log(errorMessage)
-            return Promise.reject (errorMessage)
+            return Promise.reject(errorMessage)
         }
     );
-
-
     /*
     call the login end point
      */
@@ -55,10 +52,12 @@ export default function useAuthService() {
      */
     const logout = () => {
         const authStore = useAuthStore()
-        const {user,verified,authenticated} = storeToRefs(authStore)
+        const {user, verified, authenticated,userRoles,userPermissions} = storeToRefs(authStore)
         user.value = {}
         authenticated.value = false
-        verified.value=false
+        verified.value = false
+        userRoles.value={}
+        userPermissions.value={}
         return authClient.post('/logout')
     }
     /*
@@ -78,31 +77,31 @@ export default function useAuthService() {
     /*
     call the get user endpoint
     */
-    const callUserAPI = async() => {
+    const callUserAPI = async () => {
         const authStore = useAuthStore()
-        const {user,verified,authenticated,userRoles} = storeToRefs(authStore)
+        const {user, verified, authenticated, userRoles} = storeToRefs(authStore)
         //let response= await authClient.get('/api/user')
-        let response= await authClient.get('/api/auth')
+        let response = await authClient.get('/api/auth')
 
         console.log(response.data.data)
-        authStore.user.id=response.data.data.id
-        authStore.user.first_name=response.data.data.first_name
-        authStore.user.last_name=response.data.data.last_name
-        authStore.user.name=response.data.data.name
-        authStore.user.email=response.data.data.email
-        authStore.user.avatar =response.data.data.avatar
-        authStore.user.email_verified_at=response.data.data.email_verified_at
+        authStore.user.id = response.data.data.id
+        authStore.user.first_name = response.data.data.first_name
+        authStore.user.last_name = response.data.data.last_name
+        authStore.user.name = response.data.data.name
+        authStore.user.email = response.data.data.email
+        authStore.user.avatar = response.data.data.avatar
+        authStore.user.email_verified_at = response.data.data.email_verified_at
         authStore.authenticated = true
         authStore.verified = !!response.data.data.email_verified_at;
-        authStore.userRoles=response.data.data.roles
-        authStore.userPermissions=response.data.data.permissions
+        authStore.userRoles = response.data.data.roles
+        authStore.userPermissions = response.data.data.permissions
         //response= await apiClient.get('/user-roles/' + authStore.user.id + '/')
         //authStore.userRoles=response.data
         return authStore.user
     }
 
-    const getUserRoles = async(userID)=>{
-        let response=await apiClient.get('/user-roles/' + userID + '/')
+    const getUserRoles = async (userID) => {
+        let response = await apiClient.get('/user-roles/' + userID + '/')
         return response.data
     }
 
@@ -116,20 +115,21 @@ export default function useAuthService() {
         await authClient.get('/sanctum/csrf-cookie')
         await authClient.post('/forgot-password', credentials)
     }
-    const updateUser=async(payload)=>{
+    const updateCurrentAuthenticatedUser = async (payload) => {
         console.log("updating user")
         await authClient.put("/user/profile-information", payload)
         await callUserAPI()
         console.log("finished updating user")
     }
-    return{
+    return {
         login,
         logout,
+        getUserRoles,
         resetPassword,
         registerUser,
         callUserAPI,
         sendVerificationEmail,
         sendResetEmail,
-        updateUser
+        updateCurrentAuthenticatedUser
     }
 }

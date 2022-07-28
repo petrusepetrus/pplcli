@@ -15,8 +15,9 @@
             <p class="mt-1 text-sm text-gray-900">{{ userAddress.region }}</p>
             <p class="mt-1 text-sm text-gray-900">{{ userAddress.postal_code }}</p>
             <p class="mt-1 text-sm text-gray-900">{{ userAddress.country }}</p>
-            <BaseInformationMessage v-if="userAddress.preferred_contact_address"
-                                    title="This is your preferred contact address"
+            <BaseInformationMessage
+                  v-if="userAddress.preferred_contact_address"
+                  title="This is your preferred contact address"
             >
 
             </BaseInformationMessage>
@@ -25,26 +26,26 @@
         <div class="mt-2 flex items-center flex-wrap sm:flex-nowrap">
             <div class="mr-2">
                 <BaseButton
-                      v-on:click="onChange"
                       title="Change"
+                      @click="onChange"
                 >
                 </BaseButton>
             </div>
             <div>
                 <BaseButton
-                      v-on:click="onDelete"
                       title="Delete"
                       :submitting="isSubmitting"
                       :disabled="isSubmitting"
+                      @click="onDelete"
                 >
                 </BaseButton>
             </div>
         </div>
-        <div class="m-4" v-if="changingAddress">
+        <div v-if="changingAddress" class="m-4">
             <UserAddressForm
-                  v-on:cancelled="onCancelled"
-                    v-on:updated="onUpdated"
-                  v-bind:userAddress="userAddress"
+                  :user-address="userAddress"
+                  @cancelled="onCancelled"
+                  @updated="onUpdated"
             >
             </UserAddressForm>
         </div>
@@ -59,34 +60,22 @@ The AddressCard component manages
 - the presentation of the user address details
 - initiating a change to a set of address details
 - deleting a set of address details
--------------------------------------------------------------------------------
-*/
-
-/*
+/*-------------------------------------------------------------------------------
 Imports
--------------------------------------------------------------------------------
-Vue
- */
+-------------------------------------------------------------------------------*/
+/* Vue  */
 import {ref} from 'vue'
-/*
-Components
- */
+/* Vue Router */
+import {useRoute} from "vue-router";
+/* Components */
 import BaseButton from "../ui/BaseButton.vue";
 import UserAddressForm from "./AddressForm.vue"
 import BaseInformationMessage from "../ui/BaseInformationMessage.vue";
-/*
-Services
- */
+/* Services  */
 import useUserService from "../../services/user/useUserService";
-const {deleteUserAddress,updateUserAddress} =useUserService()
-/*
-Stores
+const {deleteUserAddress} = useUserService()
+/* Stores
 load the User store to save any pre-existing addresses
-load the Auth store as we need to retrieve the User ID of the current user
- */
-import {useAuthStore} from "../../stores/AuthStore";
-
-const authStore = useAuthStore()
 /*
 Props
 -------------------------------------------------------------------------------
@@ -98,16 +87,21 @@ const props = defineProps({
 Emits
 -------------------------------------------------------------------------------
  */
-const emit=defineEmits(['refresh','change','updated'])
+const emit = defineEmits(['refresh', 'change', 'updated'])
 /*
 Variable Declaration and Initialisation
 -------------------------------------------------------------------------------
  */
 /*
+retrieve the User ID for the user in question
+ */
+const route = useRoute();
+const userID=route.params.userID
+/*
 Refs
  */
-let isSubmitting=ref(false)
-let changingAddress=ref(false)
+let isSubmitting = ref(false)
+let changingAddress = ref(false)
 /*
 Functions
 -------------------------------------------------------------------------------
@@ -118,12 +112,12 @@ Functions
  */
 const onDelete = async () => {
     try {
-        isSubmitting.value=true
-        await deleteUserAddress(authStore.user.id,props.userAddress.id)
-        isSubmitting.value=false
+        isSubmitting.value = true
+        await deleteUserAddress(userID, props.userAddress.id)
+        isSubmitting.value = false
         emit('refresh')
     } catch (e) {
-        isSubmitting.value=false
+        isSubmitting.value = false
         console.log("processing error ", e)
     }
 }
@@ -133,18 +127,18 @@ const onDelete = async () => {
  */
 const onChange = async () => {
     console.log("changing ", props.userAddress)
-    changingAddress.value=true
+    changingAddress.value = true
 }
 
 const onCancelled = async () => {
     console.log("changing ", props.userAddress)
-    changingAddress.value=false
+    changingAddress.value = false
 }
 
-const onUpdated=async()=>{
+const onUpdated = async () => {
 
     emit('refresh')
-    changingAddress.value=false
+    changingAddress.value = false
 }
 
 </script>

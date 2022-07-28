@@ -1,5 +1,5 @@
 import axios from "axios";
-import errorHandler from "../errors/useErrorHandler";
+import errorHandler from "./apiErrorHandler.js";
 
 export default function useAPIService() {
     /*

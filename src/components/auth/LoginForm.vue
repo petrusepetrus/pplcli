@@ -64,8 +64,11 @@
                               :disabled="isSubmitting"
                         />
                     </div>
-                    <BaseErrorMessage v-if="errors.general">
-                        {{ errors.general }}
+
+                    <BaseErrorMessage
+                          v-if="generalError.title"
+                          :error-description=generalError.description
+                          :error-title=generalError.title>
                     </BaseErrorMessage>
 
                 </form>
@@ -76,48 +79,46 @@
 </template>
 <script setup>
 /*
-Vue
+Overview
+Provides login facilities for end user
+and initialise authorisation details for user in the authStore
  */
-import {reactive} from "vue";
-/*
-Auth services
- */
-import useAuthService from "../../services/auth/useAuthService.js";
-/*
 
- */
+/* -----------------------------------------------------------------
+Imports
+ ------------------------------------------------------------------*/
+
+/* Vue */
+import {reactive} from "vue";
+
+/* Services and Utilities */
+import useAuthService from "../../services/auth/useAuthService.js";
+import useErrorService from "../../services/errors/useErrorService.js";
 import {hasRole} from "../../utils/RolesAndPermissions.js";
-/*
-Store
- */
+
+/* Stores */
 import {useAuthStore} from "../../stores/AuthStore";
-import {useUserStore} from "../../stores/UserStore.js";
-import {storeToRefs} from 'pinia'
-/*
-Validation
- */
+
+/* Validation */
 import {useField, useForm} from 'vee-validate'
 import {object, string} from 'yup'
-/*
-Router
- */
+
+/* Router */
 import {useRouter} from "vue-router";
-/*
-Base Components
- */
+
+/* Base Components */
 import BaseErrorMessage from "../ui/BaseErrorMessage.vue";
 import BaseInput from "../ui/BaseInput.vue";
 import BaseButton from "../ui/BaseButton.vue";
 
+/* -----------------------------------------------------------------
+Initialisation and Set Up
+ ------------------------------------------------------------------*/
 const router = useRouter()
 const authStore = useAuthStore()
-const {user} = storeToRefs(authStore)
 const {login} = useAuthService()
-
-const form = reactive({
-    email: '',
-    password: ''
-})
+const {errorMessageHandler}=useErrorService()
+const generalError=reactive({})
 /*
 Set up the vee-validate validation items
  */
@@ -125,14 +126,15 @@ const validationSchema = object({
     password: string().required('Please enter your password'),
     email: string().email('Invalid email format').required('An email address is required'),
 })
-const {handleSubmit, isSubmitting, setErrors, errors} = useForm({
+const {handleSubmit, isSubmitting, errors} = useForm({
     validationSchema
 })
 const {value: email, handleChange} = useField('email')
 const {value: password} = useField('password')
-/*
-On form submission
- */
+
+/* -----------------------------------------------------------------
+Functions
+ ------------------------------------------------------------------*/
 const onSubmit = handleSubmit(async values => {
     /*
     attempt to login
@@ -160,9 +162,8 @@ const onSubmit = handleSubmit(async values => {
             router.push({name: 'verify-email'})
         }
     } catch (e) {
-        console.log("processing error ", e)
         console.log(e)
-        setErrors(e)
+        await errorMessageHandler(e, generalError)
     }
     return {
         onSubmit,
@@ -172,7 +173,6 @@ const onSubmit = handleSubmit(async values => {
         errors
     }
 })
-
 </script>
 
 <style scoped>

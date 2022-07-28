@@ -4,26 +4,30 @@
             <h3 class="text-lg font-medium text-gray-900">Address Details</h3>
 
         </div>
-        <div class="mt-6 sm:mt-0 sm:ml-16 sm:flex-none">
-            <BaseButton v-if="availableAddressTypesCount!==0"
-                        v-on:click="addAddress"
-                        title="Add Address"
+        <div v-if="!flgChangingAddress" class="mt-6 sm:mt-0 sm:ml-16 sm:flex-none">
+            <BaseButton
+                  v-if="availableAddressTypesCount!==0"
+                  title="Add Address"
+                  @click="addAddress"
             />
         </div>
     </div>
     <p class="my-4 text-sm text-gray-500">
-        We will ask you to nominate one of your addresses to be your primary correspondence address which
+        You can add several different address types. Please nominate one as your primary correspondence address which
         should be an address where you can receive mail.
     </p>
-    <div class="-mx-4 mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-6 md:mx-0 md:rounded-lg">
+    <div
+          v-if="flgAddressesFound"
+          class="-mx-4 mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-6 md:mx-0 md:rounded-lg">
         <table class="min-w-full divide-y divide-gray-300">
             <thead class="bg-gray-50">
             <tr>
-                <th scope="col"
-                    class="hidden py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 lg:table-cell">
+                <th
+                      scope="col"
+                      class="hidden py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 lg:table-cell">
                     Type
                 </th>
-                <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">
+                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">
                     Address
                 </th>
                 <th scope="col" class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell">
@@ -77,19 +81,23 @@
                 <td class="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">{{ userAddress.town }}</td>
                 <td class="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">{{ userAddress.post_code }}</td>
                 <td class="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">{{ userAddress.country }}</td>
-                <td class="px-3 py-4 text-sm text-gray-500" v-if="userAddress.preferred_contact_address===0"></td>
-                <td class="px-3 py-4 text-sm text-gray-500" v-else>
+                <td v-if="userAddress.preferred_contact_address===0" class="px-3 py-4 text-sm text-gray-500"></td>
+                <td v-else class="px-3 py-4 text-sm text-gray-500">
                     <CheckCircleIcon class="h-5 w-5 text-green-400" aria-hidden="true"/>
                 </td>
                 <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <button class="text-indigo-600 hover:text-indigo-900"
-                            v-on:click="changeAddress(userAddress)"
+                    <button
+                          v-if="!flgChangingAddress"
+                          class="text-indigo-600 hover:text-indigo-900"
+                          @click="changeAddress(userAddress)"
                     >Edit
                     </button>
                 </td>
                 <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <button class="text-indigo-600 hover:text-indigo-900"
-                            v-on:click="deleteAddress(userAddress)"
+                    <button
+                          v-if="!flgChangingAddress"
+                          class="text-indigo-600 hover:text-indigo-900"
+                          @click="deleteAddress(userAddress)"
                     >Delete
                     </button>
                 </td>
@@ -98,197 +106,248 @@
         </table>
     </div>
     <div>
-        <div class="m-4" v-if="addingAddress">
+        <div v-if="flgAddingAddress" class="m-4">
             <AddressForm
-                  v-on:refresh="onRefresh"
-                  v-on:cancelled="onCancelled"
+                  :user-i-d="userID"
+                  @refresh="onRefresh"
+                  @cancelled="onCancelled"
             >
             </AddressForm>
         </div>
-        <div class="m-4" v-if="changingAddress">
+        <div v-if="flgChangingAddress" class="m-4">
             <AddressForm
-                  v-on:cancelled="onCancelled"
-                  v-on:updated="onUpdated"
-                  v-bind:userAddress="userAddress"
-                  :key="userAddress.id"
+                  :key="userAddressToChange.id"
+                  :user-address="userAddressToChange"
+                  :user-i-d="userID"
+                  @cancelled="onCancelled"
+                  @updated="onUpdated"
             >
             </AddressForm>
         </div>
     </div>
-    <div class="mt-6 lg:col-span-1 md:col-span-1 sm:col-span-4" v-if="warningMessage.text">
+    <div v-if="warningMessage.text" class="mt-6 lg:col-span-1 md:col-span-1 sm:col-span-4">
         <BaseWarningMessage
-              :title="warningMessage.title"
+              :warning-title="warningMessage.warningTitle"
         >
             {{ warningMessage.text }}
         </BaseWarningMessage>
     </div>
-    <div class="mt-6 lg:col-span-1 md:col-span-1 sm:col-span-4" v-if="errorMessage.text">
-        <BaseErrorMessage>
-            :title="errorMessage.title"
-            {{ errorMessage.text }}
+    <div v-if="error.title" class="mt-6 lg:col-span-1 md:col-span-1 sm:col-span-4">
+        <BaseErrorMessage
+              v-if="error.title"
+              :error-description=error.description
+              :error-title=error.title>
         </BaseErrorMessage>
     </div>
 </template>
 
 <script setup>
-/*
+/* 
+-------------------------------------------------------------------------------
 Overview
 -------------------------------------------------------------------------------
 The AddressInformation component manages
 - the presentation of the user Address details via the AddressCard components
-- the addition of new Address for a user
-- changing a user's Address details
+- the addition of new Addresses for a user
+- changing or deleting a user's Address details
+----------------------------------------------------------------------------*/
+/* 
 -------------------------------------------------------------------------------
-/*
 Imports
--------------------------------------------------------------------------------
-Vue
- */
-import {onMounted, ref, reactive} from 'vue'
-/*
-UI Components
- */
-import BaseButton from "../ui/BaseButton.vue";
+-----------------------------------------------------------------------------*/
+/* Vue  */
+import {onMounted, ref, reactive, onBeforeMount} from 'vue'
+/* Vue Router */
+import {useRoute} from "vue-router";
+/* Components  */
 import AddressForm from "../user/AddressForm.vue"
+import BaseButton from "../ui/BaseButton.vue";
 import BaseErrorMessage from "../ui/BaseErrorMessage.vue";
 import BaseWarningMessage from "../ui/BaseWarningMessage.vue";
 import {CheckCircleIcon} from "@heroicons/vue/solid";
-/*
-Stores
+/* Stores
 load the User store to save any pre-existing Addresss
-load the Auth store as we need to retrieve the User ID of the current user
  */
 import {useUserStore} from "../../stores/UserStore.js";
-
 const userStore = useUserStore()
-
-import {useAuthStore} from "../../stores/AuthStore";
-
-const authStore = useAuthStore()
-/*
-API
-load the getuserAddresss service to retrieve any existing user Addresss
+/* Services
+load the User services to manage user address CRUD
  */
 import useUserService from "../../services/user/useUserService.js";
-
-
-const {getUserAddresses, deleteUserAddress} = useUserService()
-const {getAvailableAddressTypes} = useUserService()
-
-/*
-Variable declarations
+import generalUtilities from "../../utils/GeneralUtilities.js";
+const {getUserAddresses, deleteUserAddress, getAvailableAddressTypes} = useUserService()
+const {testIfPromise}=generalUtilities()
+/* 
 -------------------------------------------------------------------------------
- */
-let availableAddressTypes = ref({})
-let availableAddressTypesCount = ref(0)
-let warningMessage = reactive({})
-let errorMessage=reactive({})
+Variable declarations
+------------------------------------------------------------------------------ */
+let availableAddressTypes = ref({})     //list of available address types
+let availableAddressTypesCount = ref(0) //count of available address types
 
-let addingAddress = ref(false)
-let changingAddress = ref(false)
-let userAddress = ref({})
-/*
+let warningMessage = reactive({})
+let errorMessage = reactive({})
+
+let flgAddressesFound = ref(false) //flags whether user has any addresses
+
+let flgAddingAddress = ref(false)       //flags whether we are adding an address
+let flgChangingAddress = ref(false)     //flags whether we are changing an address
+
+let userAddressToChange = reactive({})/*
+-------------------------------------------------------------------------------
 Initialisation
 -------------------------------------------------------------------------------
+/* retrieve the userID from the URL parameters for the user in question  */
+const route = useRoute();
+let userID = reactive()
+userID = route.params.userID
+let error=reactive({})
 /*
-retrieve the User ID for the user in question
- */
-const userID = authStore.user.id
-/*
-Functions
 -------------------------------------------------------------------------------
- onDelete is triggered by clicking the delete button and causes the address
- details to be deleted for the user. Once the address has been successfuly deleted
- the 'refresh' event is emitted which triggers a refresh of the user address
- in the userStore and the UserAddressCards
- */
+Functions
+-------------------------------------------------------------------------------*/
 const deleteAddress = async (userAddressToDelete) => {
+    /* Deletes a user address. Once the address has been successfully deleted
+     the 'refresh' event is emitted which triggers a refresh of the user address
+     in the userStore and the UserAddressCards
+     */
     try {
-        await deleteUserAddress(authStore.user.id, userAddressToDelete.id)
+        await deleteUserAddress(userID, userAddressToDelete.id)
         await refreshAddresses()
         await findAvailableAddressTypes()
     } catch (e) {
-        console.log("processing error ", e)
+        if(testIfPromise(e)){
+            e.then((value) => {
+                /*
+                The error handler throws a promise.reject so we need to resolve the promise
+                to access the error information
+                 */
+                error.title = value.title
+                error.description = value.description
+                //error.description=e
+            })
+        }else{
+            error.title=e
+        }
     }
 }
 const addAddress = () => {
-    userAddress = {}
-    addingAddress.value = true
+    /* Clear the userAddress working area and flag we are
+    in add (as distinct to change) mode
+     */
+    flgAddingAddress.value = true
 }
-
-const changeAddress = (userAddressToChange) => {
-    console.log("changing", userAddressToChange)
-    userAddress.value = userAddressToChange
-    console.log(userAddress.value)
-    changingAddress.value = true
+const changeAddress = (userAddressParm) => {
+    /* Prime the userAddressToChange working area with the address to change
+     and flag that we are in change (as distinct to add) mode
+    */
+    userAddressToChange.value = userAddressParm
+    flgChangingAddress.value = true
 }
-/*
-refreshAddresss is run via the onMounted hook and also triggered by the v-on:refresh
-event that can be emitted by the AddressCard and AddressDetails components to indicate
-that a change to the user's Addresss has taken place and the Addresss in the userStore
-should be updated and the AddressCards refreshed with hose new details
- */
 const refreshAddresses = async () => {
+    /*
+    refreshAddresses is run via the onMounted hook and also triggered by the v-on:refresh
+    event that can be emitted by the AddressCard and AddressDetails components to indicate
+    that a change to the user's Addresss has taken place and the Addresss in the userStore
+    should be updated and the AddressCards refreshed with hose new details
+     */
     try {
+        flgAddingAddress.value = false
+        flgChangingAddress.value = false
+        console.log(userID)
         userStore.userAddresses = await getUserAddresses(userID)
         let preferredAddressFound = false
-        warningMessage.title=""
-        warningMessage.text=""
-        for (let i = 0; i < userStore.userAddresses.length; i++) {
-            if (userStore.userAddresses[i].preferred_contact_address === 1) {
-                preferredAddressFound = true
+        warningMessage.warningTitle = ""
+        warningMessage.text = ""
+        /* if we haven't found any addresses
+                remove the addresses table from the DOM
+                set a warning message for the user
+         */
+        if (userStore.userAddresses.length === 0) {
+            flgAddressesFound.value = false
+            warningMessage.warningTitle = "Warning - no address details"
+            warningMessage.text = "You need to provide an address to receive mail and enrol on courses"
+        } else {
+            /*
+            flag that we have some addresses and reveal the table in the DOM
+            check if we have a preferred contact address set
+             */
+            flgAddressesFound.value = true
+            for (let i = 0; i < userStore.userAddresses.length; i++) {
+                if (userStore.userAddresses[i].preferred_contact_address === 1) {
+                    preferredAddressFound = true
+                }
+            }
+            /*
+            if we have no preferred contact address set a warning for the user
+             */
+            if (!preferredAddressFound) {
+                warningMessage.warningTitle = "Warning - your have no primary contact address selected"
+                warningMessage.text = "Without a primary address selected you will not receive any mail or be able to enrol on any courses"
             }
         }
-        if (!preferredAddressFound) {
-            warningMessage.title = "Warning - your have no primary contact address selected"
-            warningMessage.text = "Without a primary address selected you will not receive any mail or be able to enrol on any courses"
-        }
-
-        addingAddress.value = false
     } catch (e) {
-        /*
-        TODO need some proper error handling here
-         */
-        console.log("processing error ", e)
-        console.log(e)
+        if(testIfPromise(e)){
+            e.then((value) => {
+                /*
+                The error handler throws a promise.reject so we need to resolve the promise
+                to access the error information
+                 */
+                error.title = value.title
+                error.description = value.description
+                //error.description=e
+            })
+        }else{
+            error.title=e
+        }
     }
 }
 const findAvailableAddressTypes = async () => {
+    /*
+    retrieve the available address types from the database and populate the select
+    a user can have one address for each available type so this returns only the
+    unused address types. If there are no address types returned then we test this
+    and remove the 'add address' button in the DOM
+     */
     try {
         availableAddressTypes.value = await getAvailableAddressTypes(userID)
         availableAddressTypesCount.value = (Object.keys(availableAddressTypes.value).length)
     } catch (e) {
-        /*
-        TODO need some proper error handling here
-         */
-        console.log("processing error ", e)
-        console.log(e)
+        if(testIfPromise(e)){
+            e.then((value) => {
+                /*
+                The error handler throws a promise.reject so we need to resolve the promise
+                to access the error information
+                 */
+                error.title = value.title
+                error.description = value.description
+                //error.description=e
+            })
+        }else{
+            error.title=e
+        }
     }
 
 }
 const onCancelled = () => {
-    addingAddress.value = false
-    changingAddress.value = false
+    flgAddingAddress.value = false
+    flgChangingAddress.value = false
 }
-
 const onUpdated = async () => {
-    addingAddress.value = false
-    changingAddress.value = false
+    flgAddingAddress.value = false
+    flgChangingAddress.value = false
     await refreshAddresses()
     await findAvailableAddressTypes(userID)
 }
-
 const onRefresh = async () => {
     await refreshAddresses()
     await findAvailableAddressTypes(userID)
-    console.log(availableAddressTypes.value)
-    console.log(availableAddressTypesCount.value)
 }
 /*
-Lifecycle Hooks
 -------------------------------------------------------------------------------
- */
-onMounted(async () => {
+Lifecycle Hooks
+-------------------------------------------------------------------------------*/
+onBeforeMount(async () => {
+
     await refreshAddresses()
     await findAvailableAddressTypes(userID)
 })

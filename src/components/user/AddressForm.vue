@@ -2,86 +2,85 @@
     <BaseSpinner v-if="isLoading">
 
     </BaseSpinner>
-    <div class="rounded border border-grey p-2" v-if="!isLoading">
-        <form novalidate v-on:submit="onSubmit" class="space-y-6 ">
+    <div v-if="!isLoading" class="rounded border border-grey p-2">
+        <form novalidate class="space-y-6 " @submit="onSubmit">
             <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div class="sm:col-span-2">
                     <BaseSelect
+                          v-model="address_type"
                           label="Address type"
                           :options="address_types"
-                          v-model="address_type"
                           :error="errors.address_type"
                     >
                     </BaseSelect>
                 </div>
             </div>
             <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-
                 <div class="sm:col-span-3">
                     <BaseInput
+                          v-model="address_line_1"
                           type="string"
                           :required="true"
                           placeholder="Address Line 1"
                           autocomplete="Address Line 1"
                           label="Address Line 1"
                           name="address_line_1"
-                          :error="errors.address_line_1"
-                          v-model="address_line_1">
+                          :error="errors.address_line_1">
                     </BaseInput>
                 </div>
                 <div class="sm:col-span-3">
                     <BaseInput
+                          v-model="address_line_2"
                           type="string"
                           :required="false"
                           placeholder="Address Line 2"
                           autocomplete="Address Line 2"
                           label="Address Line 2"
                           name="address_line_2"
-                          :error="errors.address_line_2"
-                          v-model="address_line_2">
+                          :error="errors.address_line_2">
                     </BaseInput>
                 </div>
                 <div class="sm:col-span-2">
                     <BaseInput
+                          v-model="town"
                           type="string"
                           :required="true"
                           placeholder="Town"
                           autocomplete="Town"
                           label="Town"
                           name="town"
-                          :error="errors.town"
-                          v-model="town">
+                          :error="errors.town">
                     </BaseInput>
                 </div>
                 <div class="sm:col-span-2">
                     <BaseInput
+                          v-model="region"
                           type="string"
                           :required="true"
                           placeholder="Region"
                           autocomplete="Region"
                           label="Region"
                           name="region"
-                          :error="errors.region"
-                          v-model="region">
+                          :error="errors.region">
                     </BaseInput>
                 </div>
                 <div class="sm:col-span-2">
                     <BaseInput
+                          v-model="postal_code"
                           type="string"
                           :required="true"
                           placeholder="Postal code"
                           autocomplete="Postal code"
                           label="Postal code"
                           name="postal_code"
-                          :error="errors.postal_code"
-                          v-model="postal_code">
+                          :error="errors.postal_code">
                     </BaseInput>
                 </div>
                 <div class="sm:col-span-2">
                     <BaseSelect
+                          v-model="country"
                           label="Country"
                           :options="countries"
-                          v-model="country"
                           :error="errors.country"
                     >
                     </BaseSelect>
@@ -91,24 +90,26 @@
             </div>
             <div class="sm:col-span-3">
                 <BaseCheckbox
+                      v-model="preferred_contact_address"
                       label="Preferred contact address"
                       label-description="We will use this as your main correspondence address"
-                      v-model="preferred_contact_address"
                 >
                 </BaseCheckbox>
             </div>
             <div class="mt-2 flex items-center flex-wrap sm:flex-nowrap">
                 <div class="mr-2">
-                    <BaseButton v-if="isDirty"
-                                title="Save"
-                                :submitting="isSubmitting"
-                                :disabled="isSubmitting"
+                    <BaseButton
+                          v-if="isDirty"
+                          title="Save"
+                          :submitting="isSubmitting"
+                          :disabled="isSubmitting"
                     />
                 </div>
                 <div class="mr-2">
-                    <BaseButton v-on:click="onCancel"
-                                title="Cancel"
-                                :disabled="isSubmitting"
+                    <BaseButton
+                          title="Cancel"
+                          :disabled="isSubmitting"
+                          @click="onCancel"
                     />
                 </div>
             </div>
@@ -125,7 +126,12 @@
         </form>
     </div>
 </template>
-
+<script>
+// use normal <script> to declare options
+export default {
+    inheritAttrs: false
+}
+</script>
 <script setup>
 /*------------------------------------------------------------------------------
 Imports
@@ -133,11 +139,10 @@ Imports
 /*
 Vue
 */
-import {onMounted, ref, toRefs} from 'vue'
+import {onBeforeMount, onMounted, ref} from 'vue'
 /*
 Stores
 */
-import {useAuthStore} from "../../stores/AuthStore.js";
 /*
 Validation
 */
@@ -169,7 +174,8 @@ otherwise
     it will contain the set of address details to be changed
  */
 const props = defineProps({
-    userAddress: {}
+    userAddress: {},
+    userID: String
 })
 /*-----------------------------------------------------------------------------
 Emits
@@ -184,7 +190,7 @@ Variable Declaration and Initialisation
 /*
 Stores
 */
-const authStore = useAuthStore()
+
 /*
 Services
 */
@@ -198,26 +204,25 @@ Refs
 const updateMessages = ref('')
 let countries = ref([])
 let address_types = ref([])
-const userAddressID = 0
 let isLoading = ref(true)
 
+
+initialiseForm()
 /*
 default changeMode to false
 if we have a userPhone prop
     we are changing an existing phone so set changeMode to true
  */
-console.log("Address received", props.userAddress)
 let changeMode = false
 if (props.userAddress != null) {
     changeMode = true
 }
-
 /*
 Initialise the userID we are dealing with
 TODO
 we should accept this as a prop to make the component reusable
 */
-const userID = authStore.user.id
+//const userID = authStore.user.id
 
 /*
 Set up the default entries for the form fields and
@@ -228,24 +233,22 @@ are going to change an existing address so default the form fields
 to their corresponding prop values
 */
 let formValues;
-let addressId
 let preferredContactAddressBoolean = false
 
 if (changeMode) {
-    if (props.userAddress.preferred_contact_address === 1) {
+    if (props.userAddress.value.preferred_contact_address === 1) {
         preferredContactAddressBoolean = true
     }
     formValues = {
-        address_type: props.userAddress.address_type,
-        address_line_1: props.userAddress.address_line_1,
-        address_line_2: props.userAddress.address_line_2,
-        town: props.userAddress.town,
-        region: props.userAddress.region,
-        postal_code: props.userAddress.post_code,
-        country: props.userAddress.country,
+        address_type: props.userAddress.value.address_type,
+        address_line_1: props.userAddress.value.address_line_1,
+        address_line_2: props.userAddress.value.address_line_2,
+        town: props.userAddress.value.town,
+        region: props.userAddress.value.region,
+        postal_code: props.userAddress.value.post_code,
+        country: props.userAddress.value.country,
         preferred_contact_address: preferredContactAddressBoolean
     }
-    addressId = props.userAddress.id
 } else {
     formValues = {
         address_type: "",
@@ -275,7 +278,7 @@ const validationSchema = object({
 /*
 Implement the schema and initialise the fields
  */
-const {handleSubmit, isSubmitting, setErrors, errors, setFieldValue} = useForm({
+const {handleSubmit, isSubmitting, setErrors, errors} = useForm({
     validationSchema,
     initialValues: formValues
 })
@@ -317,18 +320,16 @@ const onSubmit = handleSubmit(async (values, {resetForm}) => {
             values.address_type_id = (key)
         }
     }
-
     /*
     If we are changing an existing record
         update the address details
     Otherwise
         add a new address
      */
-    if (changeMode) {
+    if (changeMode === true) {
         try {
             isSubmitting.value = true
-            await updateUserAddress(values, userID, props.userAddress.id)
-
+            await updateUserAddress(values, props.userID, props.userAddress.value.id)
             emit('updated')
             resetForm({
                 values: {
@@ -350,7 +351,7 @@ const onSubmit = handleSubmit(async (values, {resetForm}) => {
     } else {
         try {
             isSubmitting.value = true
-            await addUserAddress(values, userID, userAddressID)
+            await addUserAddress(values, props.userID)
             isSubmitting.value = false
             emit('refresh')
         } catch (e) {
@@ -384,7 +385,7 @@ const onCancel = () => {
 /*
 Initialise the countries and address type variables
  */
-onMounted(async () => {
+async function initialiseForm() {
     try {
         countries.value = await getCountries()
     } catch (e) {
@@ -392,7 +393,8 @@ onMounted(async () => {
         console.log(e)
         setErrors(e)
     }
-    if (changeMode) {
+    if (changeMode === true) {
+        console.log("getting change types")
         try {
             address_types.value = await getAddressTypes()
         } catch (e) {
@@ -402,7 +404,8 @@ onMounted(async () => {
         }
     } else {
         try {
-            address_types.value = await getAvailableAddressTypes(userID)
+            console.log(props.userID)
+            address_types.value = await getAvailableAddressTypes(props.userID)
             /*
             TODO
             Pull out the first of the remaining address types to pre-populate field
@@ -416,9 +419,7 @@ onMounted(async () => {
     }
     isLoading.value = false
 
-})
-
-
+}
 </script>
 
 <style scoped>

@@ -27,9 +27,6 @@ const useAuthStore = defineStore('AuthStore', {
             return state.userPermissions
         },
     },
-    actions: {
-
-    },
-    persist:true,
+    actions: {}
 })
 export {useAuthStore}

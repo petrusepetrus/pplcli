@@ -1,5 +1,5 @@
 import axios from "axios";
-import errorHandler from "../errors/useErrorHandler";
+import errorHandler from "../api/apiErrorHandler.js";
 
 export default function useMiscService() {
     /*
@@ -38,6 +38,7 @@ export default function useMiscService() {
         let response= await apiClient.get('/phone-types')
         return response.data
     }
+
     return{
         getCountries,
         getAddressTypes,

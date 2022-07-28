@@ -3,11 +3,19 @@ import {defineStore} from "pinia";
 const useUserStore = defineStore('UserStore', {
     state() {
         return {
+            verified: false,
+            user:{},
+            userRoles:{},
+            userPermissions:{},
             userAddresses: {},
             userPhones:{},
+            userTypes:{}
         }
     },
     getters: {
+        getUser(state) {
+            return state.user
+        },
         getUserAddresses(state) {
             return state.userAddresses
         },
@@ -19,7 +27,6 @@ const useUserStore = defineStore('UserStore', {
             return userAddressId => state.userAddresses.find((userAddress) => userAddress.id === userAddressId)
         },
     },
-    actions: {},
-    persist: true,
+    actions: {}
 })
 export {useUserStore}

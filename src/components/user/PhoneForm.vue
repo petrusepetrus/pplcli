@@ -3,14 +3,13 @@
 
     </BaseSpinner>
     <div v-if="!isLoading" class="rounded border border-grey p-2">
-        <form novalidate v-on:submit="onSubmit" class="space-y-6 ">
+        <form novalidate class="space-y-6 " @submit="onSubmit">
             <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div class="sm:col-span-2">
                     <BaseSelect
+                          v-model="phone_type"
                           label="Phone number type"
                           :options="phone_types"
-                          v-model="phone_type"
-                          :selected="phone_type"
                           :error="errors.phone_type"
                     >
                     </BaseSelect>
@@ -20,21 +19,21 @@
 
                 <div class="sm:col-span-3">
                     <BaseInput
+                          v-model="phone_number"
                           type="string"
                           :required="true"
                           placeholder="Phone Number"
                           autocomplete="Phone Number"
                           label="Phone Number"
                           name="phone_number"
-                          :error="errors.phone_number"
-                          v-model="phone_number">
+                          :error="errors.phone_number">
                     </BaseInput>
                 </div>
                 <div class="sm:col-span-2">
                     <BaseSelect
+                          v-model="country"
                           label="Country"
                           :options="countries"
-                          v-model="country"
                           :error="errors.country"
                     >
                     </BaseSelect>
@@ -42,24 +41,26 @@
             </div>
             <div class="sm:col-span-3">
                 <BaseCheckbox
+                      v-model="preferred_contact_number"
                       label="Preferred contact number"
                       label-description="We will use this as your main contact number"
-                      v-model="preferred_contact_number"
                 >
                 </BaseCheckbox>
             </div>
             <div class="mt-2 flex items-center flex-wrap sm:flex-nowrap">
                 <div class="mr-2">
-                    <BaseButton v-if="isDirty"
-                                title="Save"
-                                :submitting="isSubmitting"
-                                :disabled="isSubmitting"
+                    <BaseButton
+                          v-if="isDirty"
+                          title="Save"
+                          :submitting="isSubmitting"
+                          :disabled="isSubmitting"
                     />
                 </div>
                 <div class="mr-2">
-                    <BaseButton v-on:click="onCancel"
-                                title="Cancel"
-                                :disabled="isSubmitting"
+                    <BaseButton
+                          title="Cancel"
+                          :disabled="isSubmitting"
+                          @click="onCancel"
                     />
                 </div>
             </div>
@@ -90,11 +91,11 @@ Imports
 /*
 Vue
 */
-import {onMounted, ref, toRefs} from 'vue'
+import {onBeforeMount, onMounted, ref} from 'vue'
 /*
 Stores
 */
-import {useAuthStore} from "../../stores/AuthStore.js";
+
 /*
 Validation
 */
@@ -125,21 +126,18 @@ otherwise
     it will contain the set of phone details to be changed
  */
 const props = defineProps({
-    userPhone: {}
+    userPhone: {},
+      userID:String
 })
 /*-----------------------------------------------------------------------------
 Emits
 cancelled - announces that the action was cancelled
 updated - announces that a user was
 -------------------------------------------------------------------------------*/
-const emit = defineEmits(['cancelled', 'updated'])
+const emit = defineEmits(['refresh','cancelled', 'updated'])
 /*-----------------------------------------------------------------------------
 Variable Declaration and Initialisation
 -------------------------------------------------------------------------------*/
-/*
-Stores
-*/
-const authStore = useAuthStore()
 /*
 Services
 */
@@ -151,9 +149,9 @@ const {updateUserPhone, addUserPhone} = useUserService()
 Refs
 */
 const updateMessages = ref('')
-let phone_types = ref([])
 let countries = ref([])
-let isLoading=ref(true)
+let phone_types = ref([])
+let isLoading = ref(true)
 
 /*
 default changeMode to false
@@ -161,16 +159,15 @@ if we have a userPhone prop
     we are changing an existing phone so set changeMode to true
  */
 let changeMode = false
+console.log(props.userPhone)
 if (props.userPhone != null) {
     changeMode = true
 }
-
 /*
 Initialise the userID we are dealing with
 TODO
 we should accept this as a prop to make the component reusable
 */
-const userID = authStore.user.id
 
 /*
 Set up the default entries for the form fields and
@@ -181,26 +178,24 @@ are going to change an existing address so default the form fields
 to their corresponding prop values
 */
 let formValues;
-let phoneId
 let preferredContactNumberBoolean = false
 
-if (changeMode) {
-    if (props.userPhone.preferred_contact_number === 1) {
+if (changeMode===true) {
+    if (props.userPhone.value.preferred_contact_number === 1) {
         preferredContactNumberBoolean = true
     }
     formValues = {
-        phone_type: props.userPhone.phone_type,
-        phone_number: props.userPhone.phone_number,
-        country: props.userPhone.country,
+        phone_type: props.userPhone.value.phone_type,
+        phone_number: props.userPhone.value.phone_number,
+        country: props.userPhone.value.country,
         preferred_contact_number: preferredContactNumberBoolean
     }
-    phoneId = props.userPhone.id
 } else {
     formValues = {
         phone_type: "",
         phone_number: "",
         preferred_contact_number: false,
-        country:"UK"
+        country: "UK"
     };
 }
 
@@ -254,17 +249,17 @@ const onSubmit = handleSubmit(async (values, {resetForm}) => {
             values.phone_type_id = (key)
         }
     }
-
     /*
     If we are changing an existing record
         update the phone details
     Otherwise
         add a new phone
      */
-    if (changeMode) {
+    if (changeMode===true) {
         try {
             isSubmitting.value = true
-            await updateUserPhone(values, userID, props.userPhone.id)
+            console.log(props.userPhone)
+            await updateUserPhone(values, props.userID, props.userPhone.value.id)
             isSubmitting.value = false
             emit('updated')
             resetForm({
@@ -280,11 +275,12 @@ const onSubmit = handleSubmit(async (values, {resetForm}) => {
             setErrors(e)
         }
     } else {
+        console.log("adding a phone")
         try {
             isSubmitting.value = true
-            await addUserPhone(values, userID)
+            await addUserPhone(values, props.userID)
             isSubmitting.value = false
-            emit('updated')
+            emit('refresh')
         } catch (e) {
             console.log("processing error ", e)
             setErrors(e)
@@ -312,7 +308,7 @@ const onCancel = () => {
 /*
 Initialise the countries and phone type variables
  */
-onMounted(async () => {
+onBeforeMount(async () => {
     try {
         countries.value = await getCountries()
     } catch (e) {
@@ -320,7 +316,7 @@ onMounted(async () => {
         console.log(e)
         setErrors(e)
     }
-    if (changeMode) {
+    if (changeMode===true) {
         try {
             phone_types.value = await getPhoneTypes()
         } catch (e) {
@@ -330,7 +326,7 @@ onMounted(async () => {
         }
     } else {
         try {
-            phone_types.value = await getAvailablePhoneTypes(userID)
+            phone_types.value = await getAvailablePhoneTypes(props.userID)
             console.log(phone_types.value)
         } catch (e) {
             console.log("processing error ", e)
@@ -338,7 +334,7 @@ onMounted(async () => {
             setErrors(e)
         }
     }
-    isLoading.value=false
+    isLoading.value = false
 })
 </script>
 
